@@ -1,4 +1,5 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import pandas as pd
 import os
@@ -7,20 +8,24 @@ import time
 # Ensure the directory exists, create it if not
 os.makedirs('RE-Data', exist_ok=True)
 
-urls = ["https://www.multihousingnews.com/vanrock-buys-north-carolina-community/",
+# Start the WebDriver
+driver = webdriver.Chrome(executable_path='C:/Users/maxma/Downloads/chromedriver_win32/chromedriver.exe')
 
-"https://www.multihousingnews.com/eagle-property-pays-49m-for-orlando-apartments/"]
+# Navigate to the page
+driver.get("https://www.multihousingnews.com/market-rate/")
 
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+# Find all the article links
+article_links = [element.get_attribute('href') for element in driver.find_elements(By.CSS_SELECTOR, "a.article-title")]
 
+# Quit the driver as it's no longer needed
+driver.quit()
 
 # Empty DataFrame to store the bold texts
 all_data = pd.DataFrame()
 
-for url_index, url in enumerate(urls, start=1):
+for url_index, url in enumerate(article_links, start=1):
     try:
-        response = requests.get(url, headers=HEADERS)
+        response = requests.get(url)
 
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -43,7 +48,7 @@ for url_index, url in enumerate(urls, start=1):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-# Saving data to an Excel file
-all_data.to_excel('RE-Data/output.xlsx', sheet_name='Sheet1', index_label='Index')
+# Saving data to a CSV file
+all_data.to_csv('RE-Data/output.csv', index_label='Index')
 
-print("Data saved to RE-Data/output.xlsx")
+print("Data saved to RE-Data/output.csv")
